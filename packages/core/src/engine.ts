@@ -45,7 +45,7 @@ class DefaultSyncEngine implements SyncEngine {
   private readonly listeners = new Set<(status: SyncStatus) => void>();
   private readonly retryLimit: number;
   private syncing = false;
-  private online = typeof navigator === "undefined" ? true : navigator.onLine;
+  private online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
   private lastSyncedAt: string | undefined;
 
   readonly conflicts: SyncEngine["conflicts"];
@@ -74,7 +74,7 @@ class DefaultSyncEngine implements SyncEngine {
     if (!collection) {
       throw new Error(`Collection "${name}" is not registered.`);
     }
-    return collection as Collection<TRecord>;
+    return collection as unknown as Collection<TRecord>;
   }
 
   async syncNow(): Promise<void> {
@@ -167,8 +167,10 @@ class DefaultSyncEngine implements SyncEngine {
 
   private async nextOperation(): Promise<QueuedOperation | undefined> {
     const now = nowIso();
-    const candidates = await this.db.queue.where("status").equals("pending").sortBy("createdAt");
-    return candidates.find((operation) => !operation.nextAttemptAt || operation.nextAttemptAt <= now);
+    const candidates = await this.db.queue.where("status").equals("pending").toArray();
+    return candidates
+      .sort((left, right) => left.createdAt.localeCompare(right.createdAt))
+      .find((operation) => !operation.nextAttemptAt || operation.nextAttemptAt <= now);
   }
 
   private async pullAll(): Promise<void> {

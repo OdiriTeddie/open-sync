@@ -61,7 +61,10 @@ export function useCollection<TRecord extends SyncRecord = SyncRecord>(name: str
 
 export function useCreate<TRecord extends SyncRecord = SyncRecord>(name: string) {
   const sync = useSyncEngine();
-  return useCallback((input: Record<string, unknown>) => sync.collection<TRecord>(name).create(input), [name, sync]);
+  return useCallback(
+    (input: Omit<Partial<TRecord>, "id" | "version" | "updatedAt"> & Record<string, unknown>) => sync.collection<TRecord>(name).create(input),
+    [name, sync]
+  );
 }
 
 export function useUpdate<TRecord extends SyncRecord = SyncRecord>(name: string) {

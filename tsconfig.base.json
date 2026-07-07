@@ -13,5 +13,12 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "react-jsx"
+    ,
+    "baseUrl": ".",
+    "paths": {
+      "@synckit/shared": ["packages/shared/src/index.ts"],
+      "@synckit/core": ["packages/core/src/index.ts"],
+      "@synckit/react": ["packages/react/src/index.tsx"]
+    }
   }
 }

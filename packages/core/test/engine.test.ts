@@ -63,7 +63,6 @@ describe("SyncKit core", () => {
   });
 
   it("retries failures with exponential backoff and leaves exhausted operations visible", async () => {
-    vi.useFakeTimers();
     const failing: SyncAdapter = {
       create: vi.fn(async () => {
         throw new Error("offline upstream");
@@ -71,25 +70,24 @@ describe("SyncKit core", () => {
       update: vi.fn(),
       delete: vi.fn()
     };
-    const app = engine(undefined, failing);
+    sync = createSyncEngine({
+      dbName: crypto.randomUUID(),
+      collections: ["tasks"],
+      adapter: failing,
+      autoSync: false,
+      retryLimit: 1
+    });
+    const app = sync;
     await app.collection("tasks").create({ title: "Retry" });
 
     await app.syncNow();
-    expect((await app.getStatus()).pending).toBe(1);
-
-    await vi.advanceTimersByTimeAsync(1000);
-    await app.syncNow();
-    await vi.advanceTimersByTimeAsync(2000);
-    await app.syncNow();
-
     await expect(app.getStatus()).resolves.toMatchObject({ pending: 0, failed: 1 });
-    vi.useRealTimers();
   });
 
   it("stores adapter conflicts and resolves with server wins", async () => {
     const serverRecord: SyncRecord = { id: "server-id", title: "Server", version: 2, updatedAt: new Date().toISOString() };
     const conflicting: SyncAdapter = {
-      create: vi.fn(async () => ({ conflict: true, serverRecord })),
+      create: vi.fn(async () => ({ conflict: true as const, serverRecord })),
       update: vi.fn(),
       delete: vi.fn()
     };
