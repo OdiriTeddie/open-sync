@@ -1,11 +1,13 @@
 export { createSyncEngine } from "./engine";
-export type { CreateSyncEngineOptions, SyncEngine } from "./engine";
+export type { CreateSyncEngineOptions, SyncEngine, SyncEventMap } from "./engine";
 export type { Collection } from "./collection";
+export type { OpenSyncMigration, OpenSyncMigrationContext } from "./database";
 export type {
   AdapterConflict,
   AdapterResult,
   ConflictStrategy,
   MutationType,
+  OpenSyncErrorCode,
   QueuedOperation,
   QueueStatus,
   SyncAdapter,
@@ -13,3 +15,4 @@ export type {
   SyncRecord,
   SyncStatus
 } from "@open-sync/shared";
+export { OpenSyncError } from "@open-sync/shared";

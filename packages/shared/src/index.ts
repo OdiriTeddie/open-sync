@@ -6,6 +6,16 @@ export type QueueStatus = "pending" | "syncing" | "synced" | "failed" | "conflic
 
 export type ConflictStrategy = "client-wins" | "server-wins" | "manual";
 
+export type OpenSyncErrorCode =
+  | "collection_not_registered"
+  | "record_not_found"
+  | "conflict_not_found"
+  | "manual_resolution_required"
+  | "migration_failed"
+  | "adapter_error"
+  | "invalid_configuration"
+  | "provider_missing";
+
 export interface SyncRecord {
   id: Id;
   version: number;
@@ -25,6 +35,8 @@ export interface QueuedOperation<TPayload = unknown> {
   createdAt: string;
   nextAttemptAt?: string;
   lastError?: string;
+  lastAttemptedAt?: string;
+  syncedAt?: string;
 }
 
 export interface SyncConflict<TClient = SyncRecord, TServer = SyncRecord> {
@@ -60,10 +72,13 @@ export interface SyncStatus {
   failed: number;
   conflicts: number;
   lastSyncedAt?: string;
+  lastError?: string;
+  lastAttemptAt?: string;
+  nextRetryAt?: string;
 }
 
 export class OpenSyncError extends Error {
-  constructor(message: string, public readonly code: string) {
+  constructor(message: string, public readonly code: OpenSyncErrorCode, public readonly cause?: unknown) {
     super(message);
     this.name = "OpenSyncError";
   }

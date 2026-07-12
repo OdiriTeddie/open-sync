@@ -1,10 +1,20 @@
 {
   "name": "@open-sync/react",
   "version": "0.1.0",
+  "description": "React bindings for Open Sync.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OdiriTeddie/open-sync.git",
+    "directory": "packages/react"
+  },
+  "keywords": ["local-first", "offline", "sync", "react", "typescript"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

@@ -1,4 +1,4 @@
-import { createId, nowIso, type MutationType, type QueuedOperation, type SyncRecord } from "@open-sync/shared";
+import { OpenSyncError, createId, nowIso, type MutationType, type QueuedOperation, type SyncRecord } from "@open-sync/shared";
 import type { OpenSyncDatabase, StoredRecord } from "./database";
 
 export interface Collection<TRecord extends SyncRecord = SyncRecord> {
@@ -45,7 +45,7 @@ export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements
   async update(id: string, patch: Partial<Omit<TRecord, "id">>): Promise<TRecord> {
     const existing = await this.getStored(id);
     if (!existing) {
-      throw new Error(`Record ${id} was not found in ${this.options.name}.`);
+      throw new OpenSyncError(`Record ${id} was not found in ${this.options.name}.`, "record_not_found");
     }
 
     const record = {

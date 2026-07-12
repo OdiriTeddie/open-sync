@@ -1,10 +1,20 @@
 {
   "name": "@open-sync/shared",
   "version": "0.1.0",
+  "description": "Shared types and utilities for Open Sync.",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OdiriTeddie/open-sync.git",
+    "directory": "packages/shared"
+  },
+  "keywords": ["local-first", "offline", "sync", "typescript"],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

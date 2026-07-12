@@ -9,6 +9,9 @@ Creates an Open Sync engine.
 - `adapter`: backend adapter.
 - `autoSync`: defaults to `true`.
 - `retryLimit`: defaults to `3`.
+- `retryDelays`: retry backoff in milliseconds, defaults to `1000, 2000, 4000, 8000`.
+- `schemaVersion`: optional app schema version for migrations.
+- `migrate`: optional migration hook called when `schemaVersion` increases.
 
 ## Collection API
 
@@ -24,5 +27,30 @@ Creates an Open Sync engine.
 - `syncNow()`
 - `getStatus()`
 - `subscribe(listener)`
+- `on(event, listener)`
+- `close()`
+
+## Queue API
+
+- `queue.list(status?)`
+- `queue.retry(operationId)`
+- `queue.discard(operationId)`
+- `queue.clearSynced()`
+
+## Conflict API
+
 - `conflicts.list()`
 - `conflicts.resolve(id, strategy, manualRecord)`
+
+## Events
+
+- `sync:start`
+- `sync:success`
+- `sync:error`
+- `operation:success`
+- `operation:error`
+- `conflict`
+
+## Errors
+
+Open Sync throws `OpenSyncError` for public API failures. Stable codes include `collection_not_registered`, `record_not_found`, `conflict_not_found`, `manual_resolution_required`, `migration_failed`, `adapter_error`, `invalid_configuration`, and `provider_missing`.

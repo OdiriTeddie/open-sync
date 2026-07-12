@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import type { CreateSyncEngineOptions, SyncEngine, SyncRecord, SyncStatus } from "@open-sync/core";
-import { createSyncEngine } from "@open-sync/core";
+import { OpenSyncError, createSyncEngine } from "@open-sync/core";
 
 const SyncContext = createContext<SyncEngine | null>(null);
 
@@ -12,7 +12,7 @@ export interface SyncProviderProps extends PropsWithChildren {
 export function SyncProvider({ children, sync, config }: SyncProviderProps) {
   const engine = useMemo(() => {
     if (sync) return sync;
-    if (!config) throw new Error("SyncProvider requires either a sync instance or config.");
+    if (!config) throw new OpenSyncError("SyncProvider requires either a sync instance or config.", "invalid_configuration");
     return createSyncEngine(config);
   }, [sync, config]);
 
@@ -27,7 +27,7 @@ export function SyncProvider({ children, sync, config }: SyncProviderProps) {
 
 export function useSyncEngine(): SyncEngine {
   const sync = useContext(SyncContext);
-  if (!sync) throw new Error("Open Sync hooks must be used inside <SyncProvider>.");
+  if (!sync) throw new OpenSyncError("Open Sync hooks must be used inside <SyncProvider>.", "provider_missing");
   return sync;
 }
 

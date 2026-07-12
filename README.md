@@ -1,6 +1,6 @@
 # Open Sync
 
-Open Sync is a framework-agnostic TypeScript sync engine for local-first web apps. It persists records in IndexedDB, applies optimistic mutations immediately, queues background sync operations, retries transient failures with exponential backoff, and exposes conflict resolution primitives.
+Open Sync is a backend-agnostic local-first TypeScript sync engine for offline apps, optimistic updates, retries, and conflict resolution. It persists records in IndexedDB, queues mutations durably, and lets you plug in any backend through a small adapter interface.
 
 ```ts
 import { createSyncEngine } from "@open-sync/core";
@@ -18,9 +18,17 @@ await sync.syncNow();
 
 ## Packages
 
-- `@open-sync/core`: IndexedDB storage, mutation queue, sync engine, retry logic, conflicts, and adapter contracts.
+- `@open-sync/core`: IndexedDB storage, mutation queue, sync engine, retry logic, conflicts, events, migrations, and adapter contracts.
 - `@open-sync/react`: React provider and hooks that wrap the core package.
 - `@open-sync/shared`: Shared TypeScript utilities and public types.
+
+## Stable Core APIs
+
+- Queue controls: `sync.queue.list()`, `retry(id)`, `discard(id)`, `clearSynced()`.
+- Lifecycle events: `sync:start`, `sync:success`, `sync:error`, `operation:success`, `operation:error`, `conflict`.
+- Schema migration hook: `schemaVersion` and `migrate` options on `createSyncEngine`.
+- Typed errors via `OpenSyncError` with stable error codes.
+- Rich sync status with `lastError`, `lastAttemptAt`, and `nextRetryAt`.
 
 ## Documentation
 
