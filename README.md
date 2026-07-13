@@ -50,3 +50,7 @@ await sync.syncNow();
 - [React Integration](docs/react-integration.md)
 - [Browser Integration Tests](docs/browser-integration-tests.md)
 - [API Reference](docs/api-reference.md)
+
+## Releases
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes and notable changes.
