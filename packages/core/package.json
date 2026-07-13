@@ -7,14 +7,24 @@
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "sideEffects": false,
-  "files": ["dist", "README.md", "LICENSE"],
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/OdiriTeddie/open-sync.git",
     "directory": "packages/core"
   },
-  "keywords": ["local-first", "offline", "sync", "indexeddb", "typescript"],
+  "keywords": [
+    "local-first",
+    "offline",
+    "sync",
+    "indexeddb",
+    "typescript"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -26,7 +36,8 @@
     "build": "tsup src/index.ts --format esm,cjs --dts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
     "@open-sync/shared": "workspace:*",
@@ -36,6 +47,8 @@
     "fake-indexeddb": "^6.0.0",
     "tsup": "^8.1.0",
     "typescript": "^5.5.3",
-    "vitest": "^1.6.0"
+    "vitest": "^1.6.0",
+    "@vitest/browser": "^1.6.0",
+    "@playwright/test": "^1.41.2"
   }
 }

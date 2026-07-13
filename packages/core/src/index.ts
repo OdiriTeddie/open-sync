@@ -1,6 +1,6 @@
 export { createSyncEngine } from "./engine";
 export type { CreateSyncEngineOptions, SyncEngine, SyncEventMap } from "./engine";
-export type { Collection } from "./collection";
+export type { Collection, CreateRecordInput } from "./collection";
 export type { OpenSyncMigration, OpenSyncMigrationContext } from "./database";
 export type {
   AdapterConflict,

@@ -41,6 +41,45 @@ describe("Open Sync core", () => {
     await expect(app.collection("tasks").findAll()).resolves.toHaveLength(0);
   });
 
+  it("supports caller-provided ids and rejects duplicate active records", async () => {
+    const app = engine();
+    const created = await app.collection("tasks").create({ id: "task-1", title: "Stable id" });
+
+    expect(created.id).toBe("task-1");
+    await expect(app.collection("tasks").create({ id: "task-1", title: "Duplicate" })).rejects.toMatchObject({ code: "duplicate_record" });
+  });
+
+  it("keeps records isolated by collection", async () => {
+    sync = createSyncEngine({ dbName: crypto.randomUUID(), collections: ["tasks", "notes"], adapter, autoSync: false });
+    const task = await sync.collection("tasks").create({ id: "same-id", title: "Task" });
+    const note = await sync.collection("notes").create({ id: "same-id", title: "Note" });
+
+    expect(task.id).toBe(note.id);
+    await expect(sync.collection("tasks").findById("same-id")).resolves.toMatchObject({ title: "Task" });
+    await expect(sync.collection("notes").findById("same-id")).resolves.toMatchObject({ title: "Note" });
+  });
+
+  it("hides deleted records and rejects updates or deletes after tombstone", async () => {
+    const app = engine();
+    const created = await app.collection("tasks").create({ title: "Delete me" });
+
+    await app.collection("tasks").delete(created.id);
+
+    await expect(app.collection("tasks").findById(created.id)).resolves.toBeUndefined();
+    await expect(app.collection("tasks").update(created.id, { title: "Nope" })).rejects.toMatchObject({ code: "record_not_found" });
+    await expect(app.collection("tasks").delete(created.id)).rejects.toMatchObject({ code: "record_not_found" });
+  });
+
+  it("clears only the selected collection locally", async () => {
+    sync = createSyncEngine({ dbName: crypto.randomUUID(), collections: ["tasks", "notes"], adapter, autoSync: false });
+    await sync.collection("tasks").create({ title: "Task" });
+    await sync.collection("notes").create({ title: "Note" });
+
+    await sync.collection("tasks").clear();
+
+    await expect(sync.collection("tasks").findAll()).resolves.toHaveLength(0);
+    await expect(sync.collection("notes").findAll()).resolves.toHaveLength(1);
+  });
   it("creates queued operations for optimistic mutations", async () => {
     const app = engine();
     await app.collection("tasks").create({ title: "Queued" });

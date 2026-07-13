@@ -10,6 +10,7 @@ export default defineConfig({
   test: {
     setupFiles: ["./test/setup.ts"],
     environment: "node",
+    exclude: ["**/node_modules/**", "**/dist/**", "./test/browser/**"],
     isolate: true
   }
 });

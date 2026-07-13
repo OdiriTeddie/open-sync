@@ -30,6 +30,11 @@ await sync.syncNow();
 - Typed errors via `OpenSyncError` with stable error codes.
 - Rich sync status with `lastError`, `lastAttemptAt`, and `nextRetryAt`.
 
+## Testing
+
+- pnpm test: unit tests with fake IndexedDB.
+- pnpm test:browser: browser integration tests with real IndexedDB via Playwright Chromium.
+
 ## Documentation
 
 See `docs/` for getting started, adapter authoring, sync flow, conflict resolution, offline mode, React integration, and API reference.

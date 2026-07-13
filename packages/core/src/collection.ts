@@ -1,8 +1,10 @@
 import { OpenSyncError, createId, nowIso, type MutationType, type QueuedOperation, type SyncRecord } from "@open-sync/shared";
 import type { OpenSyncDatabase, StoredRecord } from "./database";
 
+export type CreateRecordInput<TRecord extends SyncRecord = SyncRecord> = Omit<Partial<TRecord>, "version" | "updatedAt"> & Record<string, unknown>;
+
 export interface Collection<TRecord extends SyncRecord = SyncRecord> {
-  create(input: Omit<Partial<TRecord>, "id" | "version" | "updatedAt"> & Record<string, unknown>): Promise<TRecord>;
+  create(input: CreateRecordInput<TRecord>): Promise<TRecord>;
   update(id: string, patch: Partial<Omit<TRecord, "id">>): Promise<TRecord>;
   delete(id: string): Promise<void>;
   findById(id: string): Promise<TRecord | undefined>;
@@ -21,17 +23,23 @@ interface CollectionOptions {
 export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements Collection<TRecord> {
   constructor(private readonly options: CollectionOptions) {}
 
-  async create(input: Omit<Partial<TRecord>, "id" | "version" | "updatedAt"> & Record<string, unknown>): Promise<TRecord> {
+  async create(input: CreateRecordInput<TRecord>): Promise<TRecord> {
+    const id = typeof input.id === "string" && input.id.length > 0 ? input.id : createId("rec");
+    const existing = await this.getStored(id);
+    if (existing && !existing.deletedAt) {
+      throw new OpenSyncError(`Record ${id} already exists in ${this.options.name}.`, "duplicate_record");
+    }
+
     const timestamp = nowIso();
     const record = {
       ...input,
-      id: createId("rec"),
-      storageId: "",
+      id,
+      storageId: this.storageId(id),
       version: 1,
       updatedAt: timestamp,
+      deletedAt: undefined,
       collection: this.options.name
     } as StoredRecord;
-    record.storageId = this.storageId(record.id);
 
     await this.options.db.transaction("rw", this.options.db.records, this.options.db.queue, async () => {
       await this.options.db.records.put(record);
@@ -44,7 +52,7 @@ export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements
 
   async update(id: string, patch: Partial<Omit<TRecord, "id">>): Promise<TRecord> {
     const existing = await this.getStored(id);
-    if (!existing) {
+    if (!existing || existing.deletedAt) {
       throw new OpenSyncError(`Record ${id} was not found in ${this.options.name}.`, "record_not_found");
     }
 
@@ -69,12 +77,13 @@ export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements
 
   async delete(id: string): Promise<void> {
     const existing = await this.getStored(id);
+    if (!existing || existing.deletedAt) {
+      throw new OpenSyncError(`Record ${id} was not found in ${this.options.name}.`, "record_not_found");
+    }
     const deletedAt = nowIso();
 
     await this.options.db.transaction("rw", this.options.db.records, this.options.db.queue, async () => {
-      if (existing) {
-        await this.options.db.records.put({ ...existing, deletedAt, updatedAt: deletedAt, version: existing.version + 1 });
-      }
+      await this.options.db.records.put({ ...existing, deletedAt, updatedAt: deletedAt, version: existing.version + 1 });
       await this.enqueue("delete", id, { id, deletedAt });
     });
 
@@ -88,7 +97,10 @@ export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements
 
   async findAll(): Promise<TRecord[]> {
     const records = await this.options.db.records.where("collection").equals(this.options.name).toArray();
-    return records.filter((record) => !record.deletedAt).map((record) => this.stripCollection(record) as TRecord);
+    return records
+      .filter((record) => !record.deletedAt)
+      .sort((left, right) => left.updatedAt.localeCompare(right.updatedAt))
+      .map((record) => this.stripCollection(record) as TRecord);
   }
 
   async clear(): Promise<void> {

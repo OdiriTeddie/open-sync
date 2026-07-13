@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type PropsWithChildren } from "react";
-import type { CreateSyncEngineOptions, SyncEngine, SyncRecord, SyncStatus } from "@open-sync/core";
+import type { CreateRecordInput, CreateSyncEngineOptions, SyncEngine, SyncRecord, SyncStatus } from "@open-sync/core";
 import { OpenSyncError, createSyncEngine } from "@open-sync/core";
 
 const SyncContext = createContext<SyncEngine | null>(null);
@@ -62,7 +62,7 @@ export function useCollection<TRecord extends SyncRecord = SyncRecord>(name: str
 export function useCreate<TRecord extends SyncRecord = SyncRecord>(name: string) {
   const sync = useSyncEngine();
   return useCallback(
-    (input: Omit<Partial<TRecord>, "id" | "version" | "updatedAt"> & Record<string, unknown>) => sync.collection<TRecord>(name).create(input),
+    (input: CreateRecordInput<TRecord>) => sync.collection<TRecord>(name).create(input),
     [name, sync]
   );
 }
@@ -86,4 +86,4 @@ export function useSyncStatus(): SyncStatus | undefined {
   return status;
 }
 
-export type { CreateSyncEngineOptions, SyncEngine, SyncRecord, SyncStatus } from "@open-sync/core";
+export type { CreateRecordInput, CreateSyncEngineOptions, SyncEngine, SyncRecord, SyncStatus } from "@open-sync/core";

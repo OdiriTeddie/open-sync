@@ -9,6 +9,7 @@ export type ConflictStrategy = "client-wins" | "server-wins" | "manual";
 export type OpenSyncErrorCode =
   | "collection_not_registered"
   | "record_not_found"
+  | "duplicate_record"
   | "conflict_not_found"
   | "manual_resolution_required"
   | "migration_failed"

@@ -15,7 +15,7 @@ Creates an Open Sync engine.
 
 ## Collection API
 
-- `create(input)`
+- `create(input)` accepts app fields and an optional string `id`; active duplicate IDs throw `duplicate_record`.
 - `update(id, patch)`
 - `delete(id)`
 - `findById(id)`
@@ -53,4 +53,4 @@ Creates an Open Sync engine.
 
 ## Errors
 
-Open Sync throws `OpenSyncError` for public API failures. Stable codes include `collection_not_registered`, `record_not_found`, `conflict_not_found`, `manual_resolution_required`, `migration_failed`, `adapter_error`, `invalid_configuration`, and `provider_missing`.
+Open Sync throws `OpenSyncError` for public API failures. Stable codes include `collection_not_registered`, `record_not_found`, `duplicate_record`, `conflict_not_found`, `manual_resolution_required`, `migration_failed`, `adapter_error`, `invalid_configuration`, and `provider_missing`.
