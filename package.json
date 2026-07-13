@@ -1,6 +1,6 @@
 {
   "name": "open-sync",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Backend-agnostic local-first TypeScript sync engine for offline apps, optimistic updates, retries, and conflict resolution.",
   "type": "module",

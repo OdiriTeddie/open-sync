@@ -1,6 +1,6 @@
 {
   "name": "@open-sync/core",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Core local-first sync engine for Open Sync.",
   "type": "module",
   "main": "./dist/index.cjs",
