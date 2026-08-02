@@ -40,6 +40,8 @@ See [Migrations](./migrations.md) for migration details.
 ## Engine API
 
 - `syncNow()` pulls remote changes and processes pending queue operations sequentially.
+- `pause()` temporarily stops automatic and manual sync processing without disabling local writes or queue creation.
+- `resume()` re-enables sync processing and starts a background sync when `autoSync` is enabled and the browser is online.
 - `getStatus()` returns aggregate sync state.
 - `subscribe(listener)` subscribes to aggregate `SyncStatus` changes.
 - `on(event, listener)` subscribes to lifecycle events.

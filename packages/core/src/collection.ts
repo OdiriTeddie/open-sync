@@ -14,6 +14,13 @@ export interface Collection<TRecord extends SyncRecord = SyncRecord> {
 
 export type QueueObserver = () => void | Promise<void>;
 
+let lastQueueTimestamp = 0;
+
+function nextQueueTimestamp(): string {
+  lastQueueTimestamp = Math.max(Date.now(), lastQueueTimestamp + 1);
+  return new Date(lastQueueTimestamp).toISOString();
+}
+
 interface CollectionOptions {
   db: OpenSyncDatabase;
   name: string;
@@ -116,7 +123,7 @@ export class DexieCollection<TRecord extends SyncRecord = SyncRecord> implements
       payload,
       status: "pending",
       retryCount: 0,
-      createdAt: nowIso()
+      createdAt: nextQueueTimestamp()
     };
     await this.options.db.queue.add(operation);
   }

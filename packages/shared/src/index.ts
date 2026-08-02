@@ -69,6 +69,7 @@ export interface SyncAdapter {
 export interface SyncStatus {
   online: boolean;
   syncing: boolean;
+  paused: boolean;
   pending: number;
   failed: number;
   conflicts: number;

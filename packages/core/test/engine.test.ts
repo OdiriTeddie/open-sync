@@ -102,6 +102,36 @@ describe("Open Sync core", () => {
     await expect(app.getStatus()).resolves.toMatchObject({ pending: 0, failed: 0 });
   });
 
+  it("pauses manual sync and resumes queue processing", async () => {
+    const app = engine();
+    await app.collection("tasks").create({ title: "Paused" });
+
+    await app.pause();
+    await expect(app.getStatus()).resolves.toMatchObject({ paused: true, pending: 1 });
+
+    await app.syncNow();
+    expect(adapter.create).not.toHaveBeenCalled();
+    await expect(app.queue.list("pending")).resolves.toHaveLength(1);
+
+    await app.resume();
+    await app.syncNow();
+
+    expect(adapter.create).toHaveBeenCalledOnce();
+    await expect(app.getStatus()).resolves.toMatchObject({ paused: false, pending: 0, failed: 0 });
+  });
+
+  it("notifies status subscribers when sync is paused and resumed", async () => {
+    const app = engine();
+    const statuses: boolean[] = [];
+    const unsubscribe = app.subscribe((status) => statuses.push(status.paused));
+
+    await app.pause();
+    await app.resume();
+    unsubscribe();
+
+    expect(statuses).toContain(true);
+    expect(statuses.at(-1)).toBe(false);
+  });
   it("emits sync and operation lifecycle events", async () => {
     const app = engine();
     const events: string[] = [];

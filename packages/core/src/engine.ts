@@ -36,6 +36,8 @@ export interface SyncEventMap {
 export interface SyncEngine {
   collection<TRecord extends SyncRecord = SyncRecord>(name: string): Collection<TRecord>;
   syncNow(): Promise<void>;
+  pause(): Promise<void>;
+  resume(): Promise<void>;
   getStatus(): Promise<SyncStatus>;
   subscribe(listener: (status: SyncStatus) => void): () => void;
   on<TEvent extends keyof SyncEventMap>(event: TEvent, listener: (payload: SyncEventMap[TEvent]) => void): () => void;
@@ -67,6 +69,7 @@ class DefaultSyncEngine implements SyncEngine {
   private readonly retryLimit: number;
   private readonly retryDelays: number[];
   private syncing = false;
+  private paused = false;
   private online = typeof navigator === "undefined" ? true : navigator.onLine !== false;
   private lastSyncedAt: string | undefined;
   private lastError: string | undefined;
@@ -111,7 +114,7 @@ class DefaultSyncEngine implements SyncEngine {
   }
 
   async syncNow(): Promise<void> {
-    if (!this.online || this.syncing) {
+    if (!this.online || this.syncing || this.paused) {
       await this.emitStatus();
       return;
     }
@@ -141,6 +144,19 @@ class DefaultSyncEngine implements SyncEngine {
     }
   }
 
+  async pause(): Promise<void> {
+    this.paused = true;
+    await this.emitStatus();
+  }
+
+  async resume(): Promise<void> {
+    this.paused = false;
+    await this.emitStatus();
+    if (this.options.autoSync !== false && this.online) {
+      void this.syncNow();
+    }
+  }
+
   async getStatus(): Promise<SyncStatus> {
     const pending = await this.db.queue.where("status").anyOf("pending", "syncing").count();
     const failed = await this.db.queue.where("status").equals("failed").count();
@@ -153,6 +169,7 @@ class DefaultSyncEngine implements SyncEngine {
     return {
       online: this.online,
       syncing: this.syncing,
+      paused: this.paused,
       pending,
       failed,
       conflicts,
@@ -325,14 +342,16 @@ class DefaultSyncEngine implements SyncEngine {
 
   private async onQueueChanged(): Promise<void> {
     await this.emitStatus();
-    if (this.options.autoSync !== false && this.online) {
+    if (this.options.autoSync !== false && this.online && !this.paused) {
       void this.syncNow();
     }
   }
 
   private readonly handleOnline = (): void => {
     this.online = true;
-    void this.syncNow();
+    if (!this.paused) {
+      void this.syncNow();
+    }
   };
 
   private readonly handleOffline = (): void => {
