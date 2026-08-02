@@ -42,6 +42,7 @@ See [Migrations](./migrations.md) for migration details.
 - `syncNow()` pulls remote changes and processes pending queue operations sequentially.
 - `pause()` temporarily stops automatic and manual sync processing without disabling local writes or queue creation.
 - `resume()` re-enables sync processing and starts a background sync when `autoSync` is enabled and the browser is online.
+- `isPaused()` returns the current pause state synchronously.
 - `getStatus()` returns aggregate sync state.
 - `subscribe(listener)` subscribes to aggregate `SyncStatus` changes.
 - `on(event, listener)` subscribes to lifecycle events.
@@ -81,3 +82,4 @@ See [Events](./events.md) for payloads and usage guidance.
 Open Sync throws `OpenSyncError` for public API failures. Stable codes include `collection_not_registered`, `record_not_found`, `duplicate_record`, `conflict_not_found`, `manual_resolution_required`, `migration_failed`, `adapter_error`, `invalid_configuration`, and `provider_missing`.
 
 See [Error Handling](./error-handling.md) for recovery examples.
+

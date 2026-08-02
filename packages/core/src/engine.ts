@@ -157,6 +157,10 @@ class DefaultSyncEngine implements SyncEngine {
     }
   }
 
+  isPaused(): boolean {
+    return this.paused;
+  }
+
   async getStatus(): Promise<SyncStatus> {
     const pending = await this.db.queue.where("status").anyOf("pending", "syncing").count();
     const failed = await this.db.queue.where("status").equals("failed").count();
@@ -378,3 +382,4 @@ class DefaultSyncEngine implements SyncEngine {
     return `${collection}:${id}`;
   }
 }
+

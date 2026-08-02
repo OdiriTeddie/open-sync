@@ -273,3 +273,4 @@ describe("Open Sync core", () => {
     expect(migrate).toHaveBeenCalledOnce();
   });
 });
+
