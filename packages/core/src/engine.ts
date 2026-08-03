@@ -186,7 +186,7 @@ class DefaultSyncEngine implements SyncEngine {
 
   subscribe(listener: (status: SyncStatus) => void): () => void {
     this.listeners.add(listener);
-    void this.getStatus().then(listener);
+    void this.getStatus().then(listener).catch(() => undefined);
     return () => {
       this.listeners.delete(listener);
     };
@@ -382,4 +382,5 @@ class DefaultSyncEngine implements SyncEngine {
     return `${collection}:${id}`;
   }
 }
+
 

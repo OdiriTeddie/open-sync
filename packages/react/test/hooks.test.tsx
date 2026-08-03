@@ -2,7 +2,7 @@ import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSyncEngine, OpenSyncError, type SyncAdapter, type SyncEngine, type SyncRecord, type SyncStatus } from "@open-sync/core";
-import { SyncProvider, useCollection, useCreate, useDelete, useSyncEngine, useSyncStatus, useUpdate } from "../src";
+import { SyncProvider, useCollection, useCreate, useDelete, useSyncActions, useSyncEngine, useSyncStatus, useUpdate } from "../src";
 import { cleanupDatabases, trackDatabase } from "./setup";
 
 interface Task extends SyncRecord {
@@ -49,6 +49,16 @@ async function flush(): Promise<void> {
   await act(async () => {
     await Promise.resolve();
   });
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((promiseResolve, promiseReject) => {
+    resolve = promiseResolve;
+    reject = promiseReject;
+  });
+  return { promise, resolve, reject };
 }
 
 async function waitFor(assertion: () => void): Promise<void> {
@@ -170,6 +180,112 @@ describe("Open Sync React hooks", () => {
     expect(renderedTitles.some((titles) => titles.includes("Done"))).toBe(true);
   });
 
+  it("exposes mutation loading and error state", async () => {
+    const sync = createEngine();
+    const pendingCreate = deferred<Task>();
+    pendingCreate.promise.catch(() => undefined);
+    vi.spyOn(sync.collection<Task>("tasks"), "create").mockReturnValue(pendingCreate.promise);
+    let createTask!: ReturnType<typeof useCreate<Task>>;
+    const snapshots: Array<{ loading: boolean; error: string | null }> = [];
+
+    function Probe() {
+      createTask = useCreate<Task>("tasks");
+      snapshots.push({ loading: createTask.loading, error: createTask.error?.message ?? null });
+      return <span>{createTask.error?.message ?? (createTask.loading ? "loading" : "idle")}</span>;
+    }
+
+    const container = await render(
+      <SyncProvider sync={sync}>
+        <Probe />
+      </SyncProvider>
+    );
+    await flush();
+
+    let mutation!: Promise<Task>;
+    await act(async () => {
+      mutation = createTask({ title: "Broken" });
+      mutation.catch(() => undefined);
+    });
+    await waitFor(() => expect(container.textContent).toBe("loading"));
+
+    await act(async () => {
+      pendingCreate.reject(new Error("create failed"));
+      await expect(mutation).rejects.toThrow("create failed");
+    });
+    await waitFor(() => expect(container.textContent).toContain("create failed"));
+
+    expect(snapshots.some((snapshot) => snapshot.loading)).toBe(true);
+    expect(snapshots.some((snapshot) => snapshot.error === "create failed")).toBe(true);
+  });
+
+  it("exposes collection reload errors and reset state", async () => {
+    const sync = createEngine();
+    let collection!: ReturnType<typeof useCollection<Task>>;
+
+    function Probe() {
+      collection = useCollection<Task>("missing");
+      return <span>{collection.reloadError?.message ?? (collection.reloading ? "reloading" : "idle")}</span>;
+    }
+
+    const container = await render(
+      <SyncProvider sync={sync}>
+        <Probe />
+      </SyncProvider>
+    );
+
+    await waitFor(() => expect(container.textContent).toContain('Collection "missing" is not registered.'));
+    expect(collection.error).toBeTruthy();
+
+    await act(async () => {
+      collection.resetError();
+    });
+    await waitFor(() => expect(container.textContent).toBe("idle"));
+  });
+
+  it("exposes sync action loading and error state", async () => {
+    const pendingPull = deferred<SyncRecord[]>();
+    pendingPull.promise.catch(() => undefined);
+    const failing = adapter({ pull: vi.fn(() => pendingPull.promise) });
+    const sync = createEngine(failing);
+    let actions!: ReturnType<typeof useSyncActions>;
+    const snapshots: Array<{ syncing: boolean; error: string | null }> = [];
+
+    function Probe() {
+      actions = useSyncActions();
+      snapshots.push({ syncing: actions.syncing, error: actions.error?.message ?? null });
+      return <span>{actions.error?.message ?? (actions.syncing ? "syncing" : "idle")}</span>;
+    }
+
+    const container = await render(
+      <SyncProvider sync={sync}>
+        <Probe />
+      </SyncProvider>
+    );
+    await flush();
+
+    let syncAttempt!: Promise<void>;
+    await act(async () => {
+      syncAttempt = actions.syncNow();
+      syncAttempt.catch(() => undefined);
+    });
+    await waitFor(() => expect(container.textContent).toBe("syncing"));
+
+    await act(async () => {
+      pendingPull.reject(new Error("pull failed"));
+      await expect(syncAttempt).rejects.toThrow("Sync failed.");
+    });
+    await waitFor(() => expect(container.textContent).toContain("Sync failed."));
+
+    expect(snapshots.some((snapshot) => snapshot.syncing)).toBe(true);
+    expect(snapshots.some((snapshot) => snapshot.error === "Sync failed.")).toBe(true);
+
+    await act(async () => {
+      actions.resetError();
+      await actions.pause();
+      await actions.resume();
+    });
+    await waitFor(() => expect(actions.error).toBeNull());
+  });
   it("updates sync status subscribers when queue state changes", async () => {
     const sync = createEngine();
     const statuses: SyncStatus[] = [];
@@ -215,3 +331,9 @@ describe("Open Sync React hooks", () => {
     expect(syncFromContext).toBeTruthy();
   });
 });
+
+
+
+
+
+

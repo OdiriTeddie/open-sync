@@ -10,6 +10,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 
 - Added `sync.pause()` and `sync.resume()` to temporarily stop sync processing while preserving local mutations and queued operations.
 - Added `sync.isPaused()` and `SyncStatus.paused` for pause state inspection.
+- Added React mutation loading/error state, collection reload error state, and `useSyncActions()` for sync action loading/error state.
 
 ## [1.0.0] - 2026-07-13
 
@@ -49,4 +50,5 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 ### Added
 
 - Initial Open Sync v1 candidate implementation.
+
 
