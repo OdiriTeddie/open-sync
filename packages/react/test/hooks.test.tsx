@@ -286,6 +286,55 @@ describe("Open Sync React hooks", () => {
     });
     await waitFor(() => expect(actions.error).toBeNull());
   });
+  it("exposes pause and resume action loading state", async () => {
+    const sync = createEngine();
+    const pendingPause = deferred<void>();
+    const pendingResume = deferred<void>();
+    pendingPause.promise.catch(() => undefined);
+    pendingResume.promise.catch(() => undefined);
+    vi.spyOn(sync, "pause").mockReturnValue(pendingPause.promise);
+    vi.spyOn(sync, "resume").mockReturnValue(pendingResume.promise);
+    let actions!: ReturnType<typeof useSyncActions>;
+    const snapshots: Array<{ pausing: boolean; resuming: boolean }> = [];
+
+    function Probe() {
+      actions = useSyncActions();
+      snapshots.push({ pausing: actions.pausing, resuming: actions.resuming });
+      return <span>{actions.pausing ? "pausing" : actions.resuming ? "resuming" : "idle"}</span>;
+    }
+
+    const container = await render(
+      <SyncProvider sync={sync}>
+        <Probe />
+      </SyncProvider>
+    );
+    await flush();
+
+    let pauseAttempt!: Promise<void>;
+    await act(async () => {
+      pauseAttempt = actions.pause();
+    });
+    await waitFor(() => expect(container.textContent).toBe("pausing"));
+    await act(async () => {
+      pendingPause.resolve();
+      await pauseAttempt;
+    });
+    await waitFor(() => expect(container.textContent).toBe("idle"));
+
+    let resumeAttempt!: Promise<void>;
+    await act(async () => {
+      resumeAttempt = actions.resume();
+    });
+    await waitFor(() => expect(container.textContent).toBe("resuming"));
+    await act(async () => {
+      pendingResume.resolve();
+      await resumeAttempt;
+    });
+    await waitFor(() => expect(container.textContent).toBe("idle"));
+
+    expect(snapshots.some((snapshot) => snapshot.pausing)).toBe(true);
+    expect(snapshots.some((snapshot) => snapshot.resuming)).toBe(true);
+  });
   it("updates sync status subscribers when queue state changes", async () => {
     const sync = createEngine();
     const statuses: SyncStatus[] = [];
@@ -331,9 +380,3 @@ describe("Open Sync React hooks", () => {
     expect(syncFromContext).toBeTruthy();
   });
 });
-
-
-
-
-
-

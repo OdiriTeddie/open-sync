@@ -47,3 +47,33 @@ await syncNow();
 await pause();
 await resume();
 ```
+
+Each action has its own loading flag so UI controls can stay precise:
+
+```tsx
+<button disabled={syncing} onClick={() => void syncNow()}>
+  Sync now
+</button>
+
+<button disabled={pausing} onClick={() => void pause()}>
+  Pause sync
+</button>
+
+<button disabled={resuming} onClick={() => void resume()}>
+  Resume sync
+</button>
+```
+
+If an action fails, `error` stores the thrown error and the action promise rejects so callers can handle it locally:
+
+```tsx
+try {
+  await syncNow();
+} catch {
+  report(error);
+}
+
+resetError();
+```
+
+Use `useSyncStatus()` alongside `useSyncActions()` when the UI also needs aggregate engine state such as `paused`, `pending`, `failed`, or `lastError`.
